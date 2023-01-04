@@ -15,8 +15,8 @@ borderRadius = barHeight / 2
   transition opacity 0.2s ease
 
   .value
-    color colorSuccess
-    font-small-bold()
+    color var(--bar_color__)
+    font-medium()
     width 100%
     text-align center
 

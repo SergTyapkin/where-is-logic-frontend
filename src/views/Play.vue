@@ -185,10 +185,13 @@ export default {
       this.teams.forEach((dataTeam) => {
         const team = getTeamById(dataTeam.id);
         dataTeam.color = team.color;
+        dataTeam.score = dataTeam.score || 0;
+        dataTeam.count = dataTeam.count || 0;
       });
     }
     this.$ws.handlers.player_connected = (data) => {
-      const thisTeam = getTeamById(data.teamId);
+      const thisTeam = getTeamById(data.teamId, this.teams);
+      console.log(thisTeam)
       if (thisTeam !== undefined) {
         thisTeam.count += 1;
         return;
@@ -200,7 +203,19 @@ export default {
         name: constTeam.name,
         color: constTeam.color,
         count: 1,
+        score: 0,
       });
+    }
+    this.$ws.handlers.player_disconnected = (data) => {
+      const thisTeam = getTeamById(data.teamId, this.teams);
+      if (thisTeam === undefined) {
+        return;
+      }
+      thisTeam.count -= 1;
+      if ((thisTeam.score === 0) && (thisTeam.count <= 0)) {
+        const idx = this.teams.findIndex((team) => team.id === thisTeam.id);
+        this.teams.splice(idx, 1);
+      }
     }
 
     // --- get answering state
