@@ -1,4 +1,6 @@
 <style lang="stylus" scoped>
+@require './styles/constants.styl'
+
 .wrapper
   width 100%
   min-height 100vh
@@ -12,16 +14,109 @@
     transform translate(-50%, -50%)
     width 100px
     height 100px
+
+
+backgroundBorderColor = colorBg
+animation-time-rule = cubic-bezier(0.29, 0.82, 0.36, 0.99)
+.background
+  z-index -1
+  position fixed
+  inset 0
+  overflow hidden
+  div
+    opacity 0.3
+    width 100%
+    position absolute
+    border solid 1px colorBorder
+    background black
+    border-radius 20px
+    animation bg-move-top animation-time-rule
+    @keyframes bg-move-top
+      0%
+        opacity 0
+        top 0
+        height 200%
+        width 200%
+      20%
+        top 0
+        height 200%
+        width 200%
+  div:nth-child(2n)
+    animation bg-move-bottom animation-time-rule
+    @keyframes bg-move-bottom
+      0%
+        opacity 0
+        top 100%
+        height 200%
+        width 200%
+      20%
+        top 100%
+        height 200%
+        width 200%
+
+  div:nth-child(4)
+    animation bg-move-top-scale animation-time-rule
+    @keyframes bg-move-top-scale
+      0%
+        opacity 0
+        top 100%
+        height 0%
+        width 200%
+      20%
+        top 0%
+        height 0%
+        width 200%
+  div:nth-child(1)
+    top 50%
+    left 50%
+    height 100%
+    width 100%
+    transform rotate(70deg)
+    animation-duration 0.3s
+  div:nth-child(2)
+    top 0%
+    left 20%
+    height 200%
+    width 100%
+    transform rotate(40deg)
+    animation-duration 1.2s
+  div:nth-child(3)
+    top -40%
+    left -50%
+    height 100%
+    width 100%
+    transform rotate(20deg)
+    animation-duration 0.6s
+  div:nth-child(4)
+    top -15%
+    left 20%
+    height 100%
+    width 200%
+    transform rotate(30deg)
+    animation-duration 0.8s
+  div:nth-child(5)
+    top 90%
+    left 30%
+    height 100%
+    width 100%
+    transform rotate(20deg)
+    animation-duration 1s
 </style>
 
 <template>
-  <div class="wrapper">
+  <div class="background">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+
+  <div class="wrapper _app-flex-root">
     <CircleLoading v-if="!websocketOpened" class="loading"></CircleLoading>
     <router-view v-else v-slot="{ Component }">
-      <transition name="scale-in">
-        <div class="_app-flex-root">
-          <component :is="Component"/>
-        </div>
+      <transition :name="transitionName">
+        <component :is="Component" class="main"/>
       </transition>
     </router-view>
   </div>

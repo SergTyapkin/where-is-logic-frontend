@@ -1,7 +1,5 @@
 @require 'constants.styl'
 
-bgColor = #fff
-
 html
     overflow-x hidden
 
@@ -13,9 +11,10 @@ body
     width 100vw
     min-height 100vh
     position relative
-    background bgColor
+    background colorBg
     overflow-x hidden
     font-family monospace
+    color textColor1
 
 
 #app
@@ -29,6 +28,7 @@ body
 
         ._app-flex-filler
             flex 1
+            min-height 100%
 
 
 

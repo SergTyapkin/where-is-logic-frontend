@@ -1,49 +1,146 @@
 <style lang="stylus" scoped>
+@require '../styles/fonts.styl'
 @require '../styles/constants.styl'
 @require '../styles/buttons.styl'
 
-.buttons
-  display flex
-  gap 20px
-  .answer-ok-button
-    button-green()
-  .answer-deny-button
-    button-red()
+button-size = 90vw
+button-max-size = 500px
 
-.teams-list
+.root
+  display flex
+  flex-direction column
+
+.header
+  --color colorBlocksBg
+  display flex
+  align-items center
+  width 100%
+  margin 0
+  background var(--color)
+  box-shadow 0 5px 20px var(--color)
+  color textColorDark4
+  margin-bottom 40px
+  padding 10px
+  filter brightness(0.8)
+  transition filter 0.2s ease
+  cursor pointer
+  &:hover
+    filter brightness(1)
+  .arrow-back
+    transform rotate(180deg)
+    width 60px
+    height 60px
+  .name-container
+    white-space nowrap
+    font-medium()
+    color textColor3
+
+.main
+  flex 1
+  display flex
+  align-items center
+  justify-content center
+  position relative
+  width 100%
   margin 0
   padding 0
-  list-style none
+
+  .answering-team
+    position absolute
+    top 50%
+    left 50%
+    transform translate(-50%, -50%)
+    width 100%
+    padding 40px
+    backdrop-filter blur(20px)
+    transition opacity 0.2s ease
+    .answering-team-text
+      color var(--color)
+      text-align center
+      font-medium()
+      font-weight 700
+    .buttons
+      display flex
+      gap 20px
+      .answer-ok-button
+        button-green()
+        flex 1
+      .answer-deny-button
+        button-red()
+        flex 1
+    &.hidden
+      opacity 0
+      pointer-events none
+
+.footer
   display flex
   flex-wrap wrap
+  width 100%
+  margin 0
+  margin-top 60px
+  padding 0
   .team
+    width 50%
     background var(--color)
     flex 1
+    display flex
+    align-items center
     padding 20px
-    transition all 0.2s ease
     text-transform capitalize
+    justify-content space-between
+    .name-container
+      .score
+        font-large()
+      .name
+        font-small-extra()
+    .count-container
+      .profile-img
+        width 20px
+        height 20px
+      .count
+        font-medium()
+        z-index 1000
 </style>
 
 <template>
-  <div>{{ infoText }}</div>
-  <div v-if="answeringTeam">
-    <div>Отвечает команда: {{ answeringTeam.name }}</div>
-    <Countdown :duration="5000" :progress="5000" ref="countdown" :bar-color="answeringTeam.color" class="countdown"></Countdown>
-    <div class="buttons">
-      <div class="answer-ok-button" @click="answerRate(true)">Правильно</div>
-      <div class="answer-deny-button" @click="answerRate(false)">Не правильно</div>
-    </div>
+  <div class="root _app-flex-filler">
+    <header class="header" @click="quit">
+      <img class="arrow-back" src="../res/arrow_corner_right.svg" alt="back">
+      <div class="name-container">Назад</div>
+    </header>
+
+    <main class="main">
+      <div>
+        <div class="answering-team" :class="{hidden: !answeringTeam}">
+          <div class="answering-team-text" :style="{'--color': answeringTeam?.color}">Отвечает команда: {{ answeringTeam?.name }}</div>
+          <Countdown :duration="5000" :progress="5000" ref="countdown" :bar-color="answeringTeam?.color" class="countdown"></Countdown>
+          <div class="buttons">
+            <div class="answer-ok-button" @click="answerRate(true)">Правильно</div>
+            <div class="answer-deny-button" @click="answerRate(false)">Не правильно</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div v-for="team in teams" class="team" :style="{'--color': team.color}">
+        <div class="name-container">
+          <div class="score">{{ team.score || 0 }}</div>
+          <div class="name">{{ team.name }}</div>
+        </div>
+        <div class="count-container">
+          <img src="../res/profile.svg" alt="" class="profile-img">
+          <span class="count">{{ team.count || 0 }}</span>
+        </div>
+      </div>
+    </footer>
   </div>
-  <ul class="teams-list">
-    <li v-for="team in teams" class="team" :style="{'--color': team.color}">
-      {{ team.name }} <span v-if="team.count">Людей: {{ team.count }}</span>
-    </li>
-  </ul>
 </template>
 
 <script>
 import Countdown from "../components/Countdown.vue";
 import {Teams} from "../utils/constants";
+import {getTeamById} from "../utils/utils";
 
 
 export default {
@@ -89,6 +186,16 @@ export default {
       });
     }
 
+    // --- get answering state
+    this.$ws.send('get_answering_state', {});
+    this.$ws.handlers.answering_state = (data) => {
+      if (!data.team)
+        return;
+
+      this.isTeamAnswering = true;
+      this.answeringTeam = getTeamById(data.team.teamId);
+    }
+
     // --- setup playing process
     this.$ws.handlers.team_answered = (data) => {
       this.isTeamAnswering = true;
@@ -106,12 +213,13 @@ export default {
       this.$refs.countdown.setProgress(0);
     }
     this.$ws.handlers.answer_rated = (data) => {
+      if (data.result === true) {
+        const team = getTeamById(this.answeringTeam.id, this.teams);
+        team.score += 1;
+      }
+
       this.isTeamAnswering = false;
       this.answeringTeam = null;
-
-      if (data.result) {
-        this.infoText = "Правильно!";
-      }
     }
   },
 
@@ -123,6 +231,11 @@ export default {
       this.$ws.send('answer_result', {
         result: result,
       });
+    },
+
+    quit() {
+      this.$localStorage.removeRole();
+      this.$router.push({name: "chooseRole"});
     }
   }
 }

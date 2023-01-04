@@ -14,7 +14,7 @@ export default class LocalStorageManager {
     return localStorage.getItem(_PropertyNames.role);
   }
   removeRole() {
-    localStorage.removeRole(_PropertyNames.role);
+    localStorage.removeItem(_PropertyNames.role);
   }
 
   // ---- UserName ----

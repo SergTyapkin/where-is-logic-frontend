@@ -1,3 +1,5 @@
+import {Teams} from "./constants";
+
 export function getChildrenHeight(el) {
     const children = Array.from(el.children);
     let res = 0;
@@ -17,4 +19,11 @@ export function padStart(num, size) {
 
 export function deepClone(obj = {}) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+export function getTeamById(teamId, source = Teams) {
+    const team = source.find((team) => team.id == teamId);
+    if (team === undefined)
+        return undefined;
+    return Object.assign(team);
 }
