@@ -1,0 +1,178 @@
+<style lang="stylus" scoped>
+.wrapper
+  width 100%
+  min-height 100vh
+
+  > *
+    position absolute
+    width 100%
+  .loading
+    top 50%
+    left 50%
+    transform translate(-50%, -50%)
+    width 100px
+    height 100px
+</style>
+
+<template>
+  <div class="wrapper">
+    <CircleLoading v-if="!websocketOpened" class="loading"></CircleLoading>
+    <router-view v-else v-slot="{ Component }">
+      <transition name="scale-in">
+        <div class="_app-flex-root">
+          <component :is="Component"/>
+        </div>
+      </transition>
+    </router-view>
+  </div>
+
+  <Modal ref="modal"></Modal>
+  <ModalCalculator ref="modalCalculator"></ModalCalculator>
+  <Popups ref="popups"></Popups>
+</template>
+
+<style scoped>
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.4s ease;
+}
+.slide-left-enter-to {
+  left: 0;
+}
+.slide-left-enter-from {
+  left: -100%;
+}
+.slide-left-leave-to {
+  left: -100%;
+  transform: scale(0.8);
+}
+.slide-left-leave-from {
+  left: 0;
+}
+
+
+.scale-slide-left-enter-active,
+.scale-slide-left-leave-active {
+  transition: all 0.3s ease;
+}
+.scale-slide-left-enter-from {
+  left: -30%;
+  opacity: 0;
+}
+.scale-slide-left-enter-to {
+  left: 0%;
+  opacity: 1;
+}
+.scale-slide-left-leave-from {
+  transform: scale(1);
+}
+.scale-slide-left-leave-to {
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+
+.scale-in-enter-active,
+.scale-in-leave-active {
+  transition: all 0.3s ease;
+}
+.scale-in-enter-from {
+  transform: scale(1.2);
+  opacity: 0;
+}
+.scale-in-enter-to {
+  transform: scale(1);
+  opacity: 1;
+}
+.scale-in-leave-from {
+  transform: scale(1);
+  opacity: 1;
+}
+.scale-in-leave-to {
+  transform: scale(0.8);
+  opacity: 0;
+}
+</style>
+
+<script>
+import {getCurrentInstance} from "vue";
+import Modal from "/src/components/vue-plugins/Modal.vue";
+import ModalCalculator from "/src/components/vue-plugins/ModalCalculator.vue";
+import Popups from "/src/components/vue-plugins/Popups.vue";
+import CircleLoading from "/src/components/CircleLoading.vue";
+import WS from "./utils/ws";
+import {EventTypes, Roles} from "./utils/constants";
+import LocalStorageManager from "./utils/localStorageManager";
+
+
+export default {
+  components: {CircleLoading, Modal, Popups, ModalCalculator},
+
+  data() {
+    return {
+      transitionName: "",
+      websocketOpened: false,
+
+      savedEvent: undefined,
+    }
+  },
+
+  watch: {
+    $route(to, from) {
+      this.transitionName = 'scale-in';
+
+      console.log(from.path, 'TO', to.path)
+
+      // if (to.path === '/profile')
+      //   this.transitionName = 'scale-slide-left';
+      // else if (from.path === '/profile')
+      //   this.transitionName = 'scale-slide-right';
+      //
+      // else if (from.path === '/signin' && to.path === '/signup')
+      //   this.transitionName = 'slide-left';
+      // else if (from.path === '/signup' && to.path === '/signin')
+      //   this.transitionName = 'slide-left';
+    }
+  },
+
+  mounted() {
+    const global = getCurrentInstance().appContext.config.globalProperties;
+
+    global.$modal = this.$refs.modal;
+    global.$modalCalculator = this.$refs.modalCalculator;
+    global.$popups = this.$refs.popups;
+    global.$app = this;
+    global.$localStorage = new LocalStorageManager();
+
+    // ------ Setup basic WS handlers --------
+    this.$ws.onopen = () => {this.websocketOpened = true};
+    this.$ws.onerror = () => {
+      this.$popups.error('Ошибка подключения:', 'Сервер недоступен');
+    }
+    this.$ws.open();
+
+    // ------ If user logined - redirect to task page or "wait for task" --------
+    const storedRole = this.$localStorage.loadRole();
+    if (storedRole === null) {
+      this.$router.push({name: 'chooseRole'});
+      return;
+    }
+    if (storedRole === Roles.seer) {
+      this.$router.push({name: 'seerPage'});
+      return;
+    }
+    // user - player
+    const storedTeam = this.$localStorage.loadSelectedTeam();
+    if (storedTeam === null) {
+      this.$router.push({name: 'chooseTeam'});
+      return;
+    }
+    // user - player, has team
+    this.$router.push({name: 'play'});
+  },
+
+
+  methods: {
+  }
+};
+</script>

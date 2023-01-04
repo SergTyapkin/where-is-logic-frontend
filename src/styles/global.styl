@@ -1,0 +1,41 @@
+@require 'constants.styl'
+
+bgColor = #fff
+
+html
+    overflow-x hidden
+
+*
+    box-sizing border-box
+
+body
+    margin 0
+    width 100vw
+    min-height 100vh
+    position relative
+    background bgColor
+    overflow-x hidden
+    font-family monospace
+
+
+#app
+    width 100%
+    height 100%
+
+    ._app-flex-root
+        min-height 100vh
+        display flex
+        flex-direction column
+
+        ._app-flex-filler
+            flex 1
+
+
+
+.pc-hide
+    display none
+@media ({mobile})
+    .mobile-hide
+        display none
+    .pc-hide
+        display block
