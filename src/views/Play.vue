@@ -120,8 +120,9 @@ button-max-size = 500px
           <Countdown :duration="2000" :progress="2000" ref="countdownButton" bar-color="gray" class="countdown-button"></Countdown>
         </div>
 
-        <div class="answering-team" :class="{hidden: !answeringTeam}">
-          <div class="answering-team-text" :style="{'--color': answeringTeam?.color}">Отвечает команда: {{ answeringTeam?.name }}</div>
+        <div class="answering-team" :class="{hidden: !answeringTeam}" :style="{'--color': answeringTeam?.color}">
+          <div class="answering-team-text">Отвечает команда: {{ answeringTeam?.name }}</div>
+          <div class="answering-team-text">Кнопка нажата: {{ answeringTeam?.username }}</div>
           <Countdown :duration="5000" :progress="5000" ref="countdown" :bar-color="answeringTeam?.color" class="countdown"></Countdown>
         </div>
       </div>
@@ -191,7 +192,6 @@ export default {
     }
     this.$ws.handlers.player_connected = (data) => {
       const thisTeam = getTeamById(data.teamId, this.teams);
-      console.log(thisTeam)
       if (thisTeam !== undefined) {
         thisTeam.count += 1;
         return;
@@ -226,6 +226,7 @@ export default {
 
       this.isTeamAnswering = true;
       this.answeringTeam = getTeamById(data.team.teamId);
+      this.answeringTeam.username = data.team.userName;
     }
 
     // --- setup playing process
@@ -240,6 +241,7 @@ export default {
         id: team.id,
         name: team.name,
         color: team.color,
+        username: data.userName,
       }
 
       this.$refs.countdown.setProgress(0);
@@ -247,7 +249,19 @@ export default {
     this.$ws.handlers.answer_rated = (data) => {
       if (data.result === true) {
          const team = getTeamById(this.answeringTeam.id, this.teams);
-         team.score += 1;
+         if (team === undefined) {
+           // add new team
+           const constTeam = getTeamById(this.answeringTeam.id);
+           this.teams.push({
+             id: constTeam.id,
+             name: constTeam.name,
+             color: constTeam.color,
+             count: 0,
+             score: 1,
+           });
+         } else {
+           team.score += 1;
+         }
       }
 
       this.isTeamAnswering = false;

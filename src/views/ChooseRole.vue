@@ -13,6 +13,7 @@
     display flex
     gap 20px
     width 100%
+    margin-bottom 40px
     justify-content space-evenly
     align-items center
     @media ({mobile})

@@ -111,8 +111,9 @@ button-max-size = 500px
 
     <main class="main">
       <div>
-        <div class="answering-team" :class="{hidden: !answeringTeam}">
-          <div class="answering-team-text" :style="{'--color': answeringTeam?.color}">Отвечает команда: {{ answeringTeam?.name }}</div>
+        <div class="answering-team" :class="{hidden: !answeringTeam}" :style="{'--color': answeringTeam?.color}">
+          <div class="answering-team-text">Отвечает команда: {{ answeringTeam?.name }}</div>
+          <div class="answering-team-text">Кнопка нажата: {{ answeringTeam?.username }}</div>
           <Countdown :duration="5000" :progress="5000" ref="countdown" :bar-color="answeringTeam?.color" class="countdown"></Countdown>
           <div class="buttons">
             <div class="answer-ok-button" @click="answerRate(true)">Правильно</div>
@@ -166,24 +167,38 @@ export default {
     this.$ws.handlers.teams_count = (data) => {
       this.teams = data.teams;
       this.teams.forEach((dataTeam) => {
-        const team = Teams.find((team) => team.id == dataTeam.id);
+        const team = getTeamById(dataTeam.id);
         dataTeam.color = team.color;
+        dataTeam.score = dataTeam.score || 0;
+        dataTeam.count = dataTeam.count || 0;
       });
     }
     this.$ws.handlers.player_connected = (data) => {
-      const thisTeam = this.teams.find((team) => team.id == data.teamId);
+      const thisTeam = getTeamById(data.teamId, this.teams);
       if (thisTeam !== undefined) {
         thisTeam.count += 1;
         return;
       }
       // add new team
-      const constTeam = Teams.find((team) => team.id == data.teamId);
+      const constTeam = getTeamById(data.teamId);
       this.teams.push({
         id: constTeam.id,
         name: constTeam.name,
         color: constTeam.color,
         count: 1,
+        score: 0,
       });
+    }
+    this.$ws.handlers.player_disconnected = (data) => {
+      const thisTeam = getTeamById(data.teamId, this.teams);
+      if (thisTeam === undefined) {
+        return;
+      }
+      thisTeam.count -= 1;
+      if ((thisTeam.score === 0) && (thisTeam.count <= 0)) {
+        const idx = this.teams.findIndex((team) => team.id === thisTeam.id);
+        this.teams.splice(idx, 1);
+      }
     }
 
     // --- get answering state
@@ -194,13 +209,14 @@ export default {
 
       this.isTeamAnswering = true;
       this.answeringTeam = getTeamById(data.team.teamId);
+      this.answeringTeam.username = data.team.userName;
     }
 
     // --- setup playing process
     this.$ws.handlers.team_answered = (data) => {
       this.isTeamAnswering = true;
 
-      const team = Teams.find((team) => team.id == data.teamId);
+      const team = getTeamById(data.teamId);
       if (team === undefined)
         return;
 
@@ -208,6 +224,7 @@ export default {
         id: team.id,
         name: team.name,
         color: team.color,
+        username: data.userName,
       }
 
       this.$refs.countdown.setProgress(0);
@@ -215,7 +232,19 @@ export default {
     this.$ws.handlers.answer_rated = (data) => {
       if (data.result === true) {
         const team = getTeamById(this.answeringTeam.id, this.teams);
-        team.score += 1;
+        if (team === undefined) {
+          // add new team
+          const constTeam = getTeamById(this.answeringTeam.id);
+          this.teams.push({
+            id: constTeam.id,
+            name: constTeam.name,
+            color: constTeam.color,
+            count: 0,
+            score: 1,
+          });
+        } else {
+          team.score += 1;
+        }
       }
 
       this.isTeamAnswering = false;
