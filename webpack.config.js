@@ -28,7 +28,7 @@ module.exports = {
         })
     ],
     devServer: {
-        port: 8000,
+        port: 80,
         //https: true,
         historyApiFallback: {
             rewrites: [
@@ -43,11 +43,18 @@ module.exports = {
             ]
         },
         proxy: {
-            '/api': {
-                target: 'http://localhost:9000',
-                pathRewrite: { '^/squest': '' },
-                secure: false,
-                changeOrigin: false
+            // '/api': {
+            //     target: 'http://localhost:9000',
+            //     pathRewrite: { '^/api': '' },
+            //     secure: false,
+            //     changeOrigin: false
+            // },
+            '/websocket': {
+                target: 'ws://127.0.0.1:9000',
+                pathRewrite: { '^/ws': '' },
+                secure: true,
+                changeOrigin: true,
+                ws: true
             }
         }
     },

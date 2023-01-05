@@ -10,6 +10,6 @@ import WS from "./utils/ws";
 
 const Router = createVueRouter();
 const app = createApp(App)
-  .use(WS, 'ws://127.0.0.1:9000')
+  .use(WS, `ws://${location.host}/websocket`)
   .use(Router)
   .mount('#app');

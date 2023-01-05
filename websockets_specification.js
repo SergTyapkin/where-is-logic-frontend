@@ -68,10 +68,22 @@ const число_людей_в_командах = {
   }
 }
 
+const команда_которая_отвечает_сейчас = {
+  event: "answering_state",
+  data: {
+    team: null || {
+      userName: String,
+      teamId: Number,
+      teamName: String,
+    }
+  }
+}
+
 const ответ_оценен = {
   event: "answer_rated",
   data: {
     result: Boolean,
+    score: Number,
   }
 }
 // -------- Backend -> Frontend --------
@@ -116,6 +128,11 @@ const оценить_ответ = {
 
 const запросить_число_людей_в_командах = {
   event: "get_teams_count",
+  data: {}
+}
+
+const запросить_команду_которая_отвечает_сейчас = {
+  event: "get_answering_state",
   data: {}
 }
 // -------- Frontend -> Backend --------

@@ -94,6 +94,7 @@ button-max-size = 500px
       .name
         font-small-extra()
     .count-container
+      white-space nowrap
       .profile-img
         width 20px
         height 20px
@@ -240,10 +241,10 @@ export default {
             name: constTeam.name,
             color: constTeam.color,
             count: 0,
-            score: 1,
+            score: data.score,
           });
         } else {
-          team.score += 1;
+          team.score = data.score;
         }
       }
 
