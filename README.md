@@ -18,7 +18,6 @@ make build
 
 ### Загрузка из Docker Container Registry
 ```
-docker login git.sberrobots.ru:8443
 make pull
 ```
 
@@ -26,7 +25,7 @@ make pull
 ```
 make run
 ```
-Страница будет доступна по адресу `https://localhost:8000`
+Страница будет доступна по адресу `https://127.0.0.1`
 
 ### Остановка
 ```
